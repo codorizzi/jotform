@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>BrokerLink - NAICS Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge;" />
+
+    <script src="jquery.min.js"></script>
+    
+    <style>
+        section {
+            display: grid;
+            justify-items: center;
+            align-content: center;
+
+            gap: 4px;
+            grid-auto-flow: row;
+        }
+                
+        .btn {
+
+            display: inline-block;
+            outline: 0;
+            cursor: pointer;
+            padding: 5px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 20px;
+            vertical-align: middle;
+            border: 1px solid;
+            border-radius: 6px;
+            color: #0366d6;
+            background-color: #fafbfc;
+            border-color: #1b1f2326;
+            box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+            transition: 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+            transition-property: color, background-color, border-color;
+        }
+        
+        .btn:hover {
+            color: #ffffff;
+            background-color: #0366d6;
+            border-color: #1b1f2326;
+            box-shadow: rgba(27, 31, 35, 0.1) 0px 1px 0px 0px, rgba(255, 255, 255, 0.03) 0px 1px 0px 0px inset;
+            transition-duration: 0.1s;
+        }
+        
+        input {
+
+            min-width: 400px;
+            padding: 5px 12px;
+            font-size: 14px;
+            line-height: 20px;
+            color: #24292e;
+            vertical-align: middle;
+            background-color: #ffffff;
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            outline: none;
+            box-shadow: rgba(225, 228, 232, 0.2) 0px 1px 0px 0px inset;
+            
+        }
+        
+        input:focus{
+            border-color: #0366d6;
+            outline: none;
+            box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
+        }
+        
+        input.error {
+            background-color: #ff91916b;
+        }
+
+
+        label,input{
+            display:flex;
+            flex-direction:column;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        
+        body {
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #0366d6;
+        }
+        
+        
+    </style>
+    
+    <script>
+        
+        var baseURL = 'https://brokerlink.jotform.com/';
+                 
+        $('document').ready(function() {
+          
+            let fieldCount = parseInt(getUrlParameter('numfields'));
+            
+            for(let i = 1; i <= fieldCount; i++) {
+                
+                let fieldText = getUrlParameter('fieldtext' + i);
+                let fieldId = getUrlParameter('fieldid' + i);
+                let fieldType = getUrlParameter('fieldtype' + i);
+                
+                CreateField(fieldText, fieldId, fieldType);
+                
+            }
+            
+        });
+
+        function CreateField(fieldText, fieldId, fieldType) {
+            
+            if(fieldType === "email")
+                CreateEmailField(fieldText, fieldId);
+            else
+                CreateTextField(fieldText, fieldId);
+        }
+
+        function CreateTextField(fieldText, fieldId) {
+
+            let label = $('<label for="' + fieldId + '">' + fieldText + '</label>')
+            let field = $('<input type="text" id="' + fieldId + '" name="' + fieldId + '">')
+            let p = $('<p></p>').append(label).append(field);
+
+            $('#fields').append(p);
+
+        }
+        
+        function CreateEmailField(fieldText, fieldId) {
+
+            let label = $('<label for="' + fieldId + '">' + fieldText + '</label>')
+            let field = $('<input type="text" id="' + fieldId + '" name="' + fieldId + '" onfocusout="validateEmail(this)">')
+            let p = $('<p></p>').append(label).append(field);
+
+            $('#fields').append(p);
+
+        }
+        
+        function getUrlParameter(sParam) {
+            var sPageURL = window.location.search.substring(1),
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
+
+            for (i = 0; i < sURLVariables.length; i++) {
+                sParameterName = sURLVariables[i].split('=');
+
+                if (sParameterName[0] === sParam) {
+                    return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+                }
+            }
+
+            throw 'Parameter missing [' + sParam + ']';
+
+        }
+        
+        function generateURL() {
+                        
+            let url = baseURL + getUrlParameter('url') + '\\' + getFieldParameters();
+                        
+            $('#url')
+                .text(url)
+                .css('display', 'inline-block');
+            
+            copyTextToClipboard(url);
+            
+        }
+        
+        function getFieldParameters() {
+            
+            var output = '';
+            
+            $('#fields :input').each(function(e) {
+                output += this.id + '=' + encodeURIComponent(this.value);
+            });
+            
+            return output;
+            
+        }
+
+        function copyTextToClipboard(text) {
+            if (!navigator.clipboard) {
+                fallbackCopyTextToClipboard(text);
+                return;
+            }
+            navigator.clipboard.writeText(text).then(function() {
+                console.log('Async: Copying to clipboard was successful!');
+            }, function(err) {
+                console.error('Async: Could not copy text: ', err);
+            });
+        }
+
+        function validateEmail(input) {
+
+            var validRegex = /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
+
+            if (input.value.match(validRegex)) {
+                $(input)
+                    .removeClass('error')
+                    .attr('isvalid', true);
+            } else {
+                $(input)
+                    .addClass('error')
+                    .attr('isvalid', false);
+            }
+
+        }
+        
+    </script>
+    
+</head>
+<body>
+<section>
+    <img src="Brokerlink-60.jpg"  alt="BrokerLink!"/>
+    <p>
+        URL Generator for JotForm Pages.
+    </p>
+    <div id="fields"></div>
+    <button class="btn" onclick="generateURL()" style="display: inline-block;">GENERATE URL</button>
+    <p>
+        <a id="url" href="#" style="display: none;"></a>
+    </p>
+</section>
+
+
+</body>
+</html>
